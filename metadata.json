@@ -1,0 +1,6 @@
+{
+  "name": "AKASHA AI – Client Portal",
+  "description": "Official client portal for AKASHA AI software updates, installation guides, and support management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

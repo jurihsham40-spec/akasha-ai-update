@@ -1,0 +1,227 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Default-Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'abysamaldynkasht@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'role', 'company', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'name', 'email', 'accessCode', 'role', 'company', 'phone', 'avatar', 'status', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.role in ['admin', 'client'] &&
+             data.company is string && data.company.size() <= 150 &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('accessCode' in data) || (data.accessCode is string && data.accessCode.size() <= 100)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 50)) &&
+             (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 1000)) &&
+             (!('status' in data) || (data.status in ['active', 'suspended']));
+    }
+
+    function isValidSystem(data) {
+      return data.keys().hasAll(['id', 'name', 'code', 'description', 'currentVersion', 'lastUpdateDate', 'status', 'clientId']) &&
+             data.keys().hasOnly(['id', 'name', 'code', 'description', 'currentVersion', 'lastUpdateDate', 'status', 'clientId', 'icon', 'downloadUrl', 'requiresUninstallOld', 'customUpdateInstructions', 'backupInstructions']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 150 &&
+             data.code is string && data.code.size() >= 1 && data.code.size() <= 50 &&
+             data.description is string && data.description.size() <= 1000 &&
+             data.currentVersion is string && data.currentVersion.size() <= 50 &&
+             data.lastUpdateDate is string && data.lastUpdateDate.size() <= 50 &&
+             data.status in ['active', 'maintenance', 'deprecated'] &&
+             data.clientId is string && data.clientId.size() <= 128 &&
+             (!('icon' in data) || (data.icon is string && data.icon.size() <= 50)) &&
+             (!('downloadUrl' in data) || (data.downloadUrl is string && data.downloadUrl.size() <= 1000)) &&
+             (!('requiresUninstallOld' in data) || (data.requiresUninstallOld is bool)) &&
+             (!('customUpdateInstructions' in data) || (data.customUpdateInstructions is string && data.customUpdateInstructions.size() <= 2000)) &&
+             (!('backupInstructions' in data) || (data.backupInstructions is string && data.backupInstructions.size() <= 2000));
+    }
+
+    function isValidUpdate(data) {
+      return data.keys().hasAll(['id', 'systemId', 'systemName', 'version', 'releaseDate', 'description', 'downloadUrl']) &&
+             data.keys().hasOnly(['id', 'systemId', 'systemName', 'version', 'releaseDate', 'description', 'features', 'bugFixes', 'fileSize', 'fileType', 'fileName', 'downloadUrl', 'checksum', 'targetClientIds']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.systemId is string && data.systemId.size() <= 128 &&
+             data.systemName is string && data.systemName.size() <= 150 &&
+             data.version is string && data.version.size() <= 50 &&
+             data.releaseDate is string && data.releaseDate.size() <= 50 &&
+             data.description is string && data.description.size() <= 2000 &&
+             data.downloadUrl is string && data.downloadUrl.size() <= 2000 &&
+             (!('features' in data) || (data.features is list && data.features.size() <= 50)) &&
+             (!('bugFixes' in data) || (data.bugFixes is list && data.bugFixes.size() <= 50)) &&
+             (!('fileSize' in data) || (data.fileSize is string && data.fileSize.size() <= 50)) &&
+             (!('fileType' in data) || (data.fileType is string && data.fileType.size() <= 100)) &&
+             (!('fileName' in data) || (data.fileName is string && data.fileName.size() <= 200)) &&
+             (!('checksum' in data) || (data.checksum is string && data.checksum.size() <= 128)) &&
+             (!('targetClientIds' in data) || (data.targetClientIds is list && data.targetClientIds.size() <= 100));
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['id', 'title', 'message', 'type', 'date', 'read', 'clientId']) &&
+             data.keys().hasOnly(['id', 'title', 'message', 'type', 'date', 'read', 'clientId']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.message is string && data.message.size() <= 1000 &&
+             data.type in ['update', 'feature', 'bugfix', 'maintenance', 'file'] &&
+             data.date is string && data.date.size() <= 50 &&
+             data.read is bool &&
+             data.clientId is string && data.clientId.size() <= 128;
+    }
+
+    function isValidTicket(data) {
+      return data.keys().hasAll(['id', 'clientId', 'clientName', 'systemId', 'systemName', 'subject', 'description', 'priority', 'status', 'createdAt']) &&
+             data.keys().hasOnly(['id', 'clientId', 'clientName', 'systemId', 'systemName', 'subject', 'description', 'attachmentUrl', 'priority', 'status', 'createdAt', 'messages']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.clientId is string && data.clientId.size() <= 128 &&
+             data.clientName is string && data.clientName.size() <= 150 &&
+             data.systemId is string && data.systemId.size() <= 128 &&
+             data.systemName is string && data.systemName.size() <= 150 &&
+             data.subject is string && data.subject.size() >= 1 && data.subject.size() <= 200 &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 3000 &&
+             data.priority in ['low', 'medium', 'high', 'urgent'] &&
+             data.status in ['new', 'in_progress', 'resolved'] &&
+             data.createdAt is string && data.createdAt.size() <= 64 &&
+             (!('attachmentUrl' in data) || (data.attachmentUrl is string && data.attachmentUrl.size() <= 500000)) &&
+             (!('messages' in data) || (data.messages is list && data.messages.size() <= 100));
+    }
+
+    function isValidInstallGuide(data) {
+      return data.keys().hasAll(['id', 'title', 'systemCode', 'updateNotes']) &&
+             data.keys().hasOnly(['id', 'title', 'systemCode', 'updateNotes', 'steps']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.systemCode is string && data.systemCode.size() <= 50 &&
+             data.updateNotes is string && data.updateNotes.size() <= 4000 &&
+             (!('steps' in data) || (data.steps is list && data.steps.size() <= 20));
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['id', 'action', 'details', 'adminName', 'timestamp']) &&
+             data.keys().hasOnly(['id', 'action', 'details', 'adminName', 'timestamp']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.action is string && data.action.size() <= 200 &&
+             data.details is string && data.details.size() <= 1000 &&
+             data.adminName is string && data.adminName.size() <= 150 &&
+             data.timestamp is string && data.timestamp.size() <= 64;
+    }
+
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && (request.auth.uid == adminId || isAdmin());
+      allow list: if isAdmin();
+      allow create, update, delete: if isAdmin() && isValidId(adminId);
+    }
+
+    match /portal_state/{docId} {
+      allow get: if isSignedIn() && isValidId(docId);
+      allow list: if isSignedIn() && existing().id is string;
+      allow create: if isValidId(docId) && isValidInstallGuide(incoming()) && isAdmin();
+      allow update: if isValidId(docId) && isValidInstallGuide(incoming()) && isAdmin();
+      allow delete: if isValidId(docId) && isAdmin();
+    }
+
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isSignedIn() && (existing().id == request.auth.uid || isAdmin());
+      allow create: if isValidId(userId) && isValidUser(incoming()) && (
+        isAdmin() || (isOwner(userId) && incoming().role == 'client' && incoming().id == userId)
+      );
+      allow update: if isValidId(userId) && isValidUser(incoming()) && (
+        isAdmin() || (
+          isOwner(userId) &&
+          incoming().id == existing().id &&
+          incoming().role == existing().role &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['name', 'company', 'phone', 'avatar'])
+        )
+      );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    match /systems/{systemId} {
+      allow get: if isValidId(systemId) && (isAdmin() || (isSignedIn() && existing().clientId == request.auth.uid));
+      allow list: if isSignedIn() && (existing().clientId == request.auth.uid || isAdmin());
+      allow create: if isValidId(systemId) && isValidSystem(incoming()) && isAdmin();
+      allow update: if isValidId(systemId) && isValidSystem(incoming()) && isAdmin();
+      allow delete: if isValidId(systemId) && isAdmin();
+    }
+
+    match /updates/{updateId} {
+      allow get: if isValidId(updateId) && (isAdmin() || (isSignedIn() && (request.auth.uid in existing().targetClientIds || 'all' in existing().targetClientIds)));
+      allow list: if isSignedIn() && (request.auth.uid in existing().targetClientIds || 'all' in existing().targetClientIds || isAdmin());
+      allow create: if isValidId(updateId) && isValidUpdate(incoming()) && isAdmin();
+      allow update: if isValidId(updateId) && isValidUpdate(incoming()) && isAdmin();
+      allow delete: if isValidId(updateId) && isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow get: if isValidId(notificationId) && (isAdmin() || (isSignedIn() && (existing().clientId == request.auth.uid || existing().clientId == 'all')));
+      allow list: if isSignedIn() && (existing().clientId == request.auth.uid || existing().clientId == 'all' || isAdmin());
+      allow create: if isValidId(notificationId) && isValidNotification(incoming()) && isAdmin();
+      allow update: if isValidId(notificationId) && isValidNotification(incoming()) && (
+        isAdmin() || (
+          isSignedIn() &&
+          (existing().clientId == request.auth.uid || existing().clientId == 'all') &&
+          incoming().id == existing().id &&
+          incoming().clientId == existing().clientId &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['read'])
+        )
+      );
+      allow delete: if isValidId(notificationId) && isAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      allow get: if isValidId(ticketId) && (isAdmin() || (isSignedIn() && existing().clientId == request.auth.uid));
+      allow list: if isSignedIn() && (existing().clientId == request.auth.uid || isAdmin());
+      allow create: if isValidId(ticketId) && isValidTicket(incoming()) && (
+        isAdmin() || (isSignedIn() && incoming().clientId == request.auth.uid && incoming().status == 'new')
+      );
+      allow update: if isValidId(ticketId) && isValidTicket(incoming()) && (
+        isAdmin() || (
+          isSignedIn() &&
+          existing().clientId == request.auth.uid &&
+          incoming().clientId == existing().clientId &&
+          incoming().createdAt == existing().createdAt &&
+          existing().status != 'resolved' &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['messages'])
+        )
+      );
+      allow delete: if isValidId(ticketId) && isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow get: if isValidId(logId) && isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(logId) && isValidAuditLog(incoming()) && isAdmin();
+      allow update, delete: if false;
+    }
+  }
+}

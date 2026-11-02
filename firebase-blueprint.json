@@ -1,0 +1,154 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a client or administrator account in the AKASHA AI Portal.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "email": { "type": "string", "format": "email", "maxLength": 150 },
+        "accessCode": { "type": "string", "maxLength": 100 },
+        "role": { "type": "string", "enum": ["admin", "client"] },
+        "company": { "type": "string", "maxLength": 150 },
+        "phone": { "type": "string", "maxLength": 50 },
+        "avatar": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["active", "suspended"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "name", "email", "role", "company", "createdAt"]
+    },
+    "System": {
+      "title": "System",
+      "description": "Represents a software system developed by AKASHA AI and assigned to a client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 150 },
+        "code": { "type": "string", "minLength": 1, "maxLength": 50 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "currentVersion": { "type": "string", "maxLength": 50 },
+        "lastUpdateDate": { "type": "string", "maxLength": 50 },
+        "status": { "type": "string", "enum": ["active", "maintenance", "deprecated"] },
+        "clientId": { "type": "string", "maxLength": 128 },
+        "icon": { "type": "string", "maxLength": 50 },
+        "downloadUrl": { "type": "string", "maxLength": 1000 },
+        "requiresUninstallOld": { "type": "boolean" },
+        "customUpdateInstructions": { "type": "string", "maxLength": 2000 },
+        "backupInstructions": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["id", "name", "code", "description", "currentVersion", "lastUpdateDate", "status", "clientId"]
+    },
+    "SystemUpdate": {
+      "title": "SystemUpdate",
+      "description": "Represents a software version release and update package targeted to specific clients.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "systemId": { "type": "string", "maxLength": 128 },
+        "systemName": { "type": "string", "maxLength": 150 },
+        "version": { "type": "string", "maxLength": 50 },
+        "releaseDate": { "type": "string", "maxLength": 50 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "features": { "type": "string", "maxLength": 4000 },
+        "bugFixes": { "type": "string", "maxLength": 4000 },
+        "fileSize": { "type": "string", "maxLength": 50 },
+        "fileType": { "type": "string", "maxLength": 100 },
+        "fileName": { "type": "string", "maxLength": 200 },
+        "downloadUrl": { "type": "string", "maxLength": 2000 },
+        "checksum": { "type": "string", "maxLength": 128 },
+        "targetClientIds": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["id", "systemId", "systemName", "version", "releaseDate", "description", "downloadUrl"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Represents a notification sent to a client about updates, features, bug fixes, maintenance, or files.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "maxLength": 200 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "type": { "type": "string", "enum": ["update", "feature", "bugfix", "maintenance", "file"] },
+        "date": { "type": "string", "maxLength": 50 },
+        "read": { "type": "boolean" },
+        "clientId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "title", "message", "type", "date", "read", "clientId"]
+    },
+    "SupportTicket": {
+      "title": "SupportTicket",
+      "description": "Represents a technical support ticket created by a client.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "clientId": { "type": "string", "maxLength": 128 },
+        "clientName": { "type": "string", "maxLength": 150 },
+        "systemId": { "type": "string", "maxLength": 128 },
+        "systemName": { "type": "string", "maxLength": 150 },
+        "subject": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 3000 },
+        "attachmentUrl": { "type": "string", "maxLength": 500000 },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "status": { "type": "string", "enum": ["new", "in_progress", "resolved"] },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "clientId", "clientName", "systemId", "systemName", "subject", "description", "priority", "status", "createdAt"]
+    },
+    "InstallGuide": {
+      "title": "InstallGuide",
+      "description": "Represents customizable step-by-step installation and update instructions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "maxLength": 200 },
+        "systemCode": { "type": "string", "maxLength": 50 },
+        "updateNotes": { "type": "string", "maxLength": 4000 }
+      },
+      "required": ["id", "title", "systemCode", "updateNotes"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Represents an administrative action log entry.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "action": { "type": "string", "maxLength": 200 },
+        "details": { "type": "string", "maxLength": 1000 },
+        "adminName": { "type": "string", "maxLength": 150 },
+        "timestamp": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "action", "details", "adminName", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/portal_state/{docId}": {
+      "schema": "InstallGuide",
+      "description": "Stores synchronized portal state and configuration for AKASHA AI."
+    },
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Stores client and admin user profiles."
+    },
+    "/systems/{systemId}": {
+      "schema": "System",
+      "description": "Stores software systems linked to clients."
+    },
+    "/updates/{updateId}": {
+      "schema": "SystemUpdate",
+      "description": "Stores software release versions and targeted client lists."
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "Stores client notifications."
+    },
+    "/tickets/{ticketId}": {
+      "schema": "SupportTicket",
+      "description": "Stores technical support tickets."
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Stores administrative audit logs."
+    }
+  }
+}
